@@ -9,11 +9,12 @@ Get-Content (Join-Path $PSScriptRoot ".env") | ForEach-Object {
     }
 }
 
-$USER_TOKEN   = $env:DISCORD_USER_TOKEN
-$GUILD_ID     = $env:SERVER_A_GUILD_ID
-$CATEGORY_IDS = $env:SOURCE_CATEGORY_IDS -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
-$DCE          = Join-Path $PSScriptRoot "dce\DiscordChatExporter.Cli.exe"
-$LAST_RUN_FILE = Join-Path $PSScriptRoot "last_run.txt"
+$USER_TOKEN       = $env:DISCORD_USER_TOKEN
+$GUILD_ID         = $env:SERVER_A_GUILD_ID
+$CATEGORY_IDS     = $env:SOURCE_CATEGORY_IDS -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+$EXTRA_CHANNEL_IDS = $env:SERVER_A_CHANNEL_IDS -split "," | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+$DCE              = Join-Path $PSScriptRoot "dce\DiscordChatExporter.Cli.exe"
+$LAST_RUN_FILE    = Join-Path $PSScriptRoot "last_run.txt"
 
 # Xac dinh khoang thoi gian export
 $now = Get-Date
@@ -46,14 +47,35 @@ try {
     exit 1
 }
 
-$targetChannels = $allChannels | Where-Object { $_.type -eq 0 -and $CATEGORY_IDS -contains $_.parent_id }
+# Loc channels theo category
+$categoryChannels = $allChannels | Where-Object { $_.type -eq 0 -and $CATEGORY_IDS -contains $_.parent_id }
+
+# Loc channels theo ID rieng le (SERVER_A_CHANNEL_IDS)
+$extraChannels = @()
+if ($EXTRA_CHANNEL_IDS) {
+    $extraChannels = $allChannels | Where-Object { $_.type -eq 0 -and $EXTRA_CHANNEL_IDS -contains $_.id }
+    $missingIds = $EXTRA_CHANNEL_IDS | Where-Object { $_ -notin ($allChannels | Select-Object -ExpandProperty id) }
+    foreach ($mid in $missingIds) {
+        Write-Host "[WARN] Channel ID $mid khong tim thay trong server."
+    }
+}
+
+# Gop lai va loai trung (theo channel id)
+$seen = @{}
+$targetChannels = @()
+foreach ($ch in (@($categoryChannels) + @($extraChannels))) {
+    if ($ch -and -not $seen.ContainsKey($ch.id)) {
+        $seen[$ch.id] = $true
+        $targetChannels += $ch
+    }
+}
 
 if (-not $targetChannels) {
-    Write-Host "[WARN] Khong tim thay channel nao trong category da chi dinh."
+    Write-Host "[WARN] Khong tim thay channel nao trong category hoac danh sach da chi dinh."
     exit 0
 }
 
-Write-Host "[INFO] Tim thay $($targetChannels.Count) channel(s)"
+Write-Host "[INFO] Tim thay $($targetChannels.Count) channel(s) ($(@($categoryChannels).Count) tu category, $(@($extraChannels).Count) rieng le)"
 
 # Export tung channel
 $exported = @()
