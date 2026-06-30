@@ -1,5 +1,5 @@
 # setup_scheduler.ps1 — Chay 1 lan de tao 3 scheduled tasks
-$script = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File '$PSScriptRoot\export_daily.ps1'"
+$script = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File '$PSScriptRoot\auto_summarize.ps1'"
 
 $tasks = @(
     @{ Name = "DiscordSummarizer-9AM";  Time = "09:00" },

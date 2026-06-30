@@ -1,7 +1,15 @@
-# auto_summarize.ps1 — Export + tu dong tom tat + gui Discord (Task Scheduler goi)
-# Luong: export_daily.ps1 -> claude -p "tom tat moi nhat" -> post_webhook.ps1 (claude tu goi)
+# auto_summarize.ps1 — Export + claude tom tat (chi in text) + PowerShell gui webhook
+# Kien truc: claude KHONG goi mang (tranh bi chan headless). Wrapper nay lo viec gui.
+# Chi tom tat folder do CHINH lan chay nay tao ra & co noi dung -> khong gui trung.
 $ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
+
+# Ep UTF-8 de tieng Viet tu claude khong bi loi font (mojibake)
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+    chcp 65001 | Out-Null
+} catch {}
 
 # Thu muc log
 $logDir = Join-Path $PSScriptRoot "logs"
@@ -10,23 +18,59 @@ $stamp = Get-Date -Format "yyyy-MM-dd_HH-mm"
 $log   = Join-Path $logDir "auto_$stamp.log"
 
 function Log($msg) {
-    $line = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg"
-    $line | Tee-Object -FilePath $log -Append
+    "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg" | Tee-Object -FilePath $log -Append
 }
 
+$exportsDir = Join-Path $PSScriptRoot "exports"
+
 Log "=== Bat dau auto_summarize ==="
+
+# Ghi nho danh sach folder TRUOC khi export
+$before = @(Get-ChildItem -Path $exportsDir -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
 
 # 1) Export tin nhan moi
 Log "Buoc 1: export_daily.ps1"
 powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "export_daily.ps1") *>> $log
 
-# 2) Goi claude headless de tom tat + gui webhook (theo CLAUDE.md)
-Log "Buoc 2: claude -p 'tom tat moi nhat'"
-$claude = Join-Path $env:APPDATA "npm\claude.cmd"
-if (-not (Test-Path $claude)) {
-    Log "[LOI] Khong tim thay claude CLI tai $claude"
-    exit 1
+# Tim folder MOI (do lan chay nay tao) co chua file .txt
+$after = @(Get-ChildItem -Path $exportsDir -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+$newFolders = $after | Where-Object { $_ -notin $before }
+$target = $newFolders |
+          Where-Object { Get-ChildItem (Join-Path $exportsDir $_) -Filter *.txt -ErrorAction SilentlyContinue } |
+          Sort-Object | Select-Object -Last 1
+
+if (-not $target) {
+    Log "Khong co tin nhan moi (khong co folder moi co noi dung) -> bo qua tom tat."
+    Log "=== Xong auto_summarize ==="
+    exit 0
 }
-& $claude -p "tom tat moi nhat" *>> $log
+Log "Folder moi co noi dung: $target"
+
+# 2) Goi claude headless: CHI in ra tom tat, KHONG goi mang
+$claude = Join-Path $env:APPDATA "npm\claude.cmd"
+if (-not (Test-Path $claude)) { Log "[LOI] Khong tim thay claude CLI tai $claude"; exit 1 }
+
+$prompt = @"
+Doc tat ca file .txt trong thu muc export: exports/$target/
+Bo qua file co 'Exported 0 message(s)' hoac rong.
+Tom tat noi dung theo tung kenh co hoat dong, tieng Viet, ngan gon, co emoji va ten kenh.
+QUAN TRONG:
+- CHI IN RA noi dung tom tat thuan text. KHONG chay bat ky script nao, KHONG goi webhook, KHONG gui Discord. Mot script ben ngoai se lo viec gui.
+- KHONG hoi lai, KHONG them cau dan/cau ket nhu 'Ban co muon gui khong'. Chi in dung phan tom tat.
+"@
+
+Log "Buoc 2: claude -p (chi in tom tat)"
+$summary = (& $claude -p $prompt) | Out-String
+# Luu ban tom tat sach (UTF-8) de tien kiem tra/debug
+Set-Content -Path (Join-Path $logDir "last_summary.txt") -Value $summary -Encoding UTF8
+Add-Content -Path $log -Value $summary -Encoding UTF8
+
+# 3) Gui webhook (goi TRONG CUNG tien trinh de khong hong encoding khi truyen tham so)
+if ($summary.Trim().Length -gt 20) {
+    Log "Buoc 3: gui webhook"
+    & (Join-Path $PSScriptRoot "post_webhook.ps1") -Message $summary *>> $log
+} else {
+    Log "Tom tat rong/qua ngan -> khong gui."
+}
 
 Log "=== Xong auto_summarize ==="
