@@ -59,14 +59,18 @@ QUAN TRONG:
 - KHONG hoi lai, KHONG them cau dan/cau ket nhu 'Ban co muon gui khong'. Chi in dung phan tom tat.
 "@
 
-Log "Buoc 2: claude -p (chi in tom tat)"
-$summary = (& $claude -p $prompt) | Out-String
+Log "Buoc 2: claude -p (chi in tom tat) - model Haiku de tiet kiem token"
+$summary = (& $claude -p $prompt --model claude-haiku-4-5-20251001) | Out-String
 # Luu ban tom tat sach (UTF-8) de tien kiem tra/debug
 Set-Content -Path (Join-Path $logDir "last_summary.txt") -Value $summary -Encoding UTF8
 Add-Content -Path $log -Value $summary -Encoding UTF8
 
 # 3) Gui webhook (goi TRONG CUNG tien trinh de khong hong encoding khi truyen tham so)
-if ($summary.Trim().Length -gt 20) {
+# Chan cac thong bao loi/het han muc cua claude -> khong gui rac len Discord
+$isError = $summary -match "session limit|usage limit|rate limit|hit your|Invalid API|Execution error|Please run /login|Credit balance|quota"
+if ($isError) {
+    Log "[LOI] claude tra ve loi/het han muc -> KHONG gui. Noi dung: $($summary.Trim())"
+} elseif ($summary.Trim().Length -gt 60) {
     Log "Buoc 3: gui webhook"
     & (Join-Path $PSScriptRoot "post_webhook.ps1") -Message $summary *>> $log
 } else {
