@@ -1,40 +1,8 @@
-﻿Đã đọc xong tất cả 13 file. Dưới đây là tổng quan nội dung từng kênh:
+﻿Đã gửi tóm tắt lên Discord thành công ✅
 
----
+**Tóm tắt 3 kênh có hoạt động** (18:00 01/07 → 09:00 02/07):
 
-**TF - Inhouse:**
-
-- **aap861-ai-hair** (7 msg): Thảo luận phân nhân sự cho tính năng UA order style vào app. Chốt AnhNQ xử lý.
-
-- **aap863-ai-dance** (28 msg): App đang bị policy. Đã roll ver 1.1.0 (18) lên 99% + tắt ads all ver + kháng. Sáng 1/7 KieuLT check lại vẫn chưa hết policy. Son nhắc cần check thường xuyên hơn, không để qua ngày mới check.
-
-- **aap864-ai-learn** (9 msg): Fill ID ads phase 2 done. Gửi content lên static server, gửi build phase 2 cho tester.
-
-- **aap865-ai-color-pixel** (51 msg): Phát hiện vấn đề kịch bản ads (ECPM thấp, show rate thấp, gắn sai ID). Update lại kịch bản ads theo template PO, release ngày 30/6. Vấn đề tồn đọng: bị mất key signing, để xử lý ngày mai (1/7).
-
-- **aap857-ai-photo-restore-with-music** (20 msg): Có build trên app tester. Tạo sprint, active version, remote keys Firebase. Update kịch bản ads. Tester cần check bug.
-
-- **aap859-ai-photo-beauty** (8 msg): App mới khởi động — tạo ID ads, pin checklist + kịch bản ads, gửi bản test cho tester.
-
-- **aap860-ai-photo-collage** (8 msg): Hỏi figma in-app → không có, chỉ có wireframe pencil. HaiKM đã đẩy lên Figma.
-
-**Auto Test Result:**
-
-- **auto_test_result** (9 msg): AAP865 v1.0.2 (4) — test scenarios E/F/G PASS, clean run. Tuy nhiên tester phát hiện 3 lỗi ad ID thủ công: thừa `fo_ad_banner_splash_hf`, sai `fo_na_mix_after_01`, `fo_ad_open_resume_hf` trùng với `fo_ad_native_resume_hf`. AnhTQ nhận xử lý.
-
-**Google Play Notification:**
-
-- **p-quality** (13 msg): Cảnh báo kỹ thuật 8 app vượt ngưỡng ANR/Crash (25-28/6): Teracall, Colorzy, AI Learning Language, Hair Changer (cả Crash 5.05% lẫn ANR), Pixel Art, Magic AI Photo, Emberly, Muse Studio. Dance AI live ver 1.1.0 ở 1%.
-
-- **app-lived** (2 msg): Test webhook kênh app-lived (mẫu test, không có live thật).
-
-- **policy** (2 msg): Test webhook kênh policy (mẫu test).
-
-**Android - Publishing:**
-
-- **apl193-color-by-number** (3 msg): Chưa có số, Son vừa bật lại camp sáng 30/6.
-
-**Android - Inhouse:**
-
-- **aip568-ai-learn** (23 msg): Phát hiện miss setup Adjust SDK và Facebook SDK → hotfix 1.0.1 (5) done trong ngày, tắt camp, roll lên 1% production chiều 30/6. KieuLT đề xuất dùng Auto Test để tránh miss setup tương lai.
+- **aap864-ai-learn** — Yêu cầu tạo custom store + apply SS cho AAP864 ở Saudi/UAE, Pakistan, Bangladesh (đã ok); gửi build Firebase, nhờ connect Firebase với store; có báo check bug.
+- **aap857-ai-photo-restore-with-music** — Đã có bản build mới, mọi người vào check.
+- **aap859-ai-photo-beauty** — Hoàn thành content order AAP859 (được khen); thống nhất tách phần content thành 1 execution bot riêng cho đỡ lẫn/spam; gửi build test + nhờ check bug.
 
